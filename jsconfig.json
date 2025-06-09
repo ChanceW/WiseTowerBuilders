@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    ".next",
+    "out",
+    "My Documents",
+    "AppData",
+    "Application Data",
+    "Program Files",
+    "Program Files (x86)",
+    "Windows"
+  ]
+} 

@@ -6,6 +6,8 @@
   --parchment: #f3e9d7;
   --dark-tan: #9f6a25;
   --soft-yellow: #e4c574;
+  --paper: #fcf5e5;
+
   
   /* Dark theme as default */
   --background: var(--dark-tan);
@@ -39,4 +41,15 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+/* Global input styles */
+input {
+  background-color: #fcf5e5 !important;
+  border-color: var(--dark-tan) !important;
+}
+
+input:focus {
+  border-color: var(--golden-yellow) !important;
+  box-shadow: 0 0 0 2px var(--soft-yellow) !important;
 }
