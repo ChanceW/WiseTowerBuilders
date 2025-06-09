@@ -1,6 +1,19 @@
+"use client";
+
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 
 export default function Home() {
+  const { status } = useSession();
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-[var(--foreground)]">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-[var(--background)]">
       <main className="flex flex-col items-center gap-[32px] max-w-4xl w-full text-center">

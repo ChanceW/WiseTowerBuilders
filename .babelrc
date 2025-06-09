@@ -1,0 +1,13 @@
+{
+  "presets": ["next/babel"],
+  "ignore": [
+    "node_modules",
+    ".git",
+    "My Documents",
+    "AppData",
+    "Application Data",
+    "Program Files",
+    "Program Files (x86)",
+    "Windows"
+  ]
+} 
