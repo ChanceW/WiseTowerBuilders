@@ -10,7 +10,7 @@ export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <nav className="bg-[var(--paper)] border-b border-[#E5D5C0]">
+    <nav className="bg-[var(--paper)] border-b-[4px] border-[var(--deep-golden)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
@@ -33,7 +33,7 @@ export function Navigation() {
               <div className="relative">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center space-x-2 text-[var(--foreground)] hover:text-[var(--accent)] focus:outline-none"
+                  className="flex items-center space-x-2 text-[var(--dark-tan)] hover:text-[var(--accent)] focus:outline-none"
                 >
                   <span>{session.user?.name || session.user?.email}</span>
                   {session.user?.image ? (
@@ -80,7 +80,7 @@ export function Navigation() {
               <div className="flex items-center space-x-4">
                 <Link
                   href="/login"
-                  className="text-[var(--foreground)] hover:text-[var(--accent)]"
+                  className="text-[var(--golden-yellow)] hover:text-[var(--soft-yellow)] border-b-2 border-[var(--golden-yellow)] hover:border-[var(--soft-yellow)] transition-colors"
                 >
                   Sign in
                 </Link>

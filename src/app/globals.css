@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --golden-yellow: #dbb03f;
@@ -10,46 +12,48 @@
 
   
   /* Dark theme as default */
-  --background: var(--dark-tan);
-  --foreground: var(--parchment);
+  --background: var(--paper);
+  --foreground: var(--dark-tan);
   --accent: var(--golden-yellow);
   --accent-hover: var(--soft-yellow);
   --muted: var(--deep-golden);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-muted: var(--muted);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    --background: var(--parchment);
-    --foreground: var(--dark-tan);
-    --accent: var(--golden-yellow);
-    --accent-hover: var(--deep-golden);
-    --muted: var(--soft-yellow);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-accent: var(--accent);
+    --color-accent-hover: var(--accent-hover);
+    --color-muted: var(--muted);
+    --font-sans: var(--font-inter);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --background: var(--paper);
+      --foreground: var(--dark-tan);
+      --accent: var(--golden-yellow);
+      --accent-hover: var(--deep-golden);
+      --muted: var(--soft-yellow);
+    }
+  }
+
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)] font-sans;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-}
+@layer components {
+  input {
+    @apply bg-[#fcf5e5] border-[var(--dark-tan)] focus:border-[var(--golden-yellow)] focus:ring-2 focus:ring-[var(--soft-yellow)];
+  }
 
-/* Global input styles */
-input {
-  background-color: #fcf5e5 !important;
-  border-color: var(--dark-tan) !important;
-}
+  .btn-primary {
+    @apply bg-[var(--deep-golden)] text-[var(--background)] px-4 py-2 rounded-md hover:bg-[var(--accent)] hover:text-[var(--background)] border-2 border-[var(--deep-golden)] hover:border-[var(--accent)] transition-colors;
+  }
 
-input:focus {
-  border-color: var(--golden-yellow) !important;
-  box-shadow: 0 0 0 2px var(--soft-yellow) !important;
+  .btn-link {
+    @apply text-[var(--foreground)] hover:text-[var(--accent)] border-b-2 border-transparent hover:border-[var(--accent)] transition-colors;
+  }
 }
