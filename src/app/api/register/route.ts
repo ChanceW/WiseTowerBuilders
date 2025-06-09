@@ -6,8 +6,8 @@ export async function POST(req: Request) {
   try {
     const { email, password, name } = await req.json();
 
-    if (!email || !password) {
-      return new NextResponse("Missing email or password", { status: 400 });
+    if (!email) {
+      return new NextResponse("Missing email", { status: 400 });
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -20,14 +20,19 @@ export async function POST(req: Request) {
       return new NextResponse("User already exists", { status: 400 });
     }
 
-    const hashedPassword = await hash(password, 12);
+    // If password is provided, hash it. Otherwise, create user without password (for OAuth)
+    const userData: any = {
+      email,
+      name,
+    };
+
+    if (password) {
+      const hashedPassword = await hash(password, 12);
+      userData.password = hashedPassword;
+    }
 
     const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        password: hashedPassword,
-      },
+      data: userData,
     });
 
     return NextResponse.json({
