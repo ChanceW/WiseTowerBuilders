@@ -13,6 +13,16 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Wise Tower Builders",
   description: "Building excellence in construction",
+  icons: {
+    icon: [
+      {
+        url: '/wtb_icon.png',
+        type: 'image/png',
+      }
+    ],
+    shortcut: '/wtb_icon.png',
+    apple: '/wtb_icon.png',
+  },
 };
 
 export default function RootLayout({
