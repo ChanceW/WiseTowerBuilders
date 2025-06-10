@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { UserAvatar } from "./UserAvatar";
 
 export function Navigation() {
   const { data: session, status } = useSession();
@@ -36,19 +37,7 @@ export function Navigation() {
                   className="flex items-center space-x-2 text-[var(--dark-tan)] hover:text-[var(--accent)] focus:outline-none"
                 >
                   <span>{session.user?.name || session.user?.email}</span>
-                  {session.user?.image ? (
-                    <Image
-                      src={session.user.image}
-                      alt="Profile"
-                      width={32}
-                      height={32}
-                      className="rounded-full"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--background)]">
-                      {(session.user?.name?.[0] || session.user?.email?.[0] || "?").toUpperCase()}
-                    </div>
-                  )}
+                  <UserAvatar user={session.user} />
                 </button>
 
                 {isMenuOpen && (

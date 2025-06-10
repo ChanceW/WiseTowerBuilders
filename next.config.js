@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    domains: ['lh3.googleusercontent.com'],
+  },
   webpack: (config, { isServer, dev }) => {
     // Common ignore patterns for both build and dev
     const ignoredPatterns = [
