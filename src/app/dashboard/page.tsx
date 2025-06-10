@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { StudyGroups } from "@/components/StudyGroups";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -24,10 +25,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen p-8 bg-[var(--background)]">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-[var(--foreground)] mb-8">
-          Welcome to your Dashboard
-        </h1>
+      <div className="max-w-7xl mx-auto">
+        <StudyGroups />
       </div>
     </div>
   );
