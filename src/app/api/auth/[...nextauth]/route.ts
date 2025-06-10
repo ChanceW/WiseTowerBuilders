@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
@@ -8,6 +9,10 @@ import bcrypt from "bcryptjs";
 const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -25,8 +30,13 @@ const authOptions: AuthOptions = {
           }
         });
 
-        if (!user || !user?.password) {
+        if (!user) {
           throw new Error("Invalid credentials");
+        }
+
+        // If user has no password, they can only sign in with OAuth
+        if (!user.password) {
+          throw new Error("Please sign in with Google");
         }
 
         const isCorrectPassword = await bcrypt.compare(
@@ -47,6 +57,21 @@ const authOptions: AuthOptions = {
       }
     })
   ],
+  callbacks: {
+    async signIn({ user, account, profile }) {
+      // No custom user creation needed; let Prisma Adapter handle it
+      return true;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.sub!;
+      }
+      return session;
+    },
+    async redirect({ url, baseUrl }) {
+      return "/dashboard";
+    },
+  },
   pages: {
     signIn: "/login",
   },

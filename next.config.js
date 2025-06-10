@@ -75,6 +75,9 @@ const nextConfig = {
       memoryLimit: 4096,
     },
   },
+  images: {
+    domains: ['lh3.googleusercontent.com'],
+  },
 };
 
 module.exports = nextConfig; 
