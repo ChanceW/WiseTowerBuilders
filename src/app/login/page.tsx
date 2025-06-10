@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from "next/image";
 
-export default function LoginPage() {
+// Create a client component for the login form
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -175,5 +176,18 @@ export default function LoginPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+// Main page component
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+        <div className="text-[var(--foreground)] text-xl">Loading...</div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 } 
