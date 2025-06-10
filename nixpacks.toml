@@ -1,0 +1,34 @@
+[phases.setup]
+nixPkgs = [
+  "nodejs_20",
+  "postgresql_15",
+  "openssl"
+]
+
+[phases.install]
+cmds = [
+  "npm ci"
+]
+
+[phases.build]
+cmds = [
+  "npm run build"
+]
+
+[start]
+cmd = "npm start"
+
+[variables]
+NODE_ENV = "production"
+NEXT_TELEMETRY_DISABLED = "1"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "on-failure"
+restartPolicyMaxRetries = 3
+
+[build]
+baseImage = "node:20-slim"
+buildImage = "node:20-slim" 
