@@ -24,7 +24,7 @@ export default function Home() {
           width={300}
           height={100}
           priority
-          className="object-contain rounded-[25px] border-4 border-[var(--dark-tan)] mb-8"
+          className="object-contain rounded-[25px] mb-8"
         />
         <div className="max-w-4xl space-y-6">
           <p className="text-xl sm:text-2xl text-[var(--accent)] font-medium">
