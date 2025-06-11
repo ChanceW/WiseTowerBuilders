@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { UserAvatar } from "./UserAvatar";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface StudyGroup {
   id: string;
@@ -142,43 +144,48 @@ export function StudyGroups() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Create Study Group Form */}
-      <div className="bg-[var(--paper)] p-4 rounded-lg shadow-md max-w-xl mx-auto border-2 border-[var(--deep-golden)]">
-        <h2 className="text-2xl font-bold text-[var(--foreground)] mb-4 text-center">
-          Create Study Group
-        </h2>
-        <form onSubmit={handleCreateGroup} className="space-y-3">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              placeholder="Enter study group name"
-              className="flex-grow px-3 py-2 rounded-lg border-2 border-[var(--dark-tan)] focus:border-[var(--golden-yellow)] focus:ring-2 focus:ring-[var(--soft-yellow)]"
-              disabled={isCreating}
-            />
+    <div className="space-y-12">
+      {/* Create Group Form */}
+      <div className="flex justify-center">
+        <div className="bg-[var(--paper)] rounded-lg p-6 border-2 border-[var(--deep-golden)] w-fit">
+          <h2 className="text-2xl font-bold text-[var(--foreground)] mb-6 text-center">
+            Create New Study Group
+          </h2>
+          <form onSubmit={handleCreateGroup} className="space-y-3 min-w-[300px]">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-[var(--foreground)] mb-1">
+                Study Group Name
+              </label>
+              <input
+                type="text"
+                id="name"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                className="w-full px-3 py-2 border border-[var(--muted)] rounded-md bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--deep-golden)]"
+                placeholder="Enter study group name"
+                required
+              />
+            </div>
             <button
               type="submit"
-              disabled={isCreating || !newGroupName.trim()}
-              className="btn-primary whitespace-nowrap px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[var(--deep-golden)] text-[var(--paper)] py-2 px-4 rounded-md hover:bg-[var(--deep-golden)]/90 transition-colors"
             >
-              {isCreating ? "Creating..." : "Create"}
+              Create Study Group
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded relative max-w-xl mx-auto">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
           {error}
         </div>
       )}
 
       {/* Invite Code Display */}
       {showInviteCode && (
-        <div className="bg-[var(--paper)] p-4 rounded-lg shadow-md max-w-xl mx-auto">
+        <div className="bg-[var(--paper)] rounded-lg p-6 border-2 border-[var(--deep-golden)]">
           <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
             Study Group Created!
           </h3>
@@ -206,16 +213,16 @@ export function StudyGroups() {
       )}
 
       {/* Study Groups List */}
-      <div className="space-y-8">
+      <div className="space-y-12">
         {/* Groups where user is admin */}
         {studyGroups?.adminOf && studyGroups.adminOf.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold text-[var(--foreground)] mb-4 text-center">
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-[var(--foreground)] text-center">
               Your Study Groups
             </h2>
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-6">
               {studyGroups.adminOf.map((group) => (
-                <div key={group.id} className="bg-[var(--paper)] rounded-lg p-4 border-2 border-[var(--deep-golden)] w-[300px]">
+                <div key={group.id} className="bg-[var(--paper)] rounded-lg p-6 border-2 border-[var(--deep-golden)] w-[300px]">
                   <h3 className="text-xl font-semibold text-[var(--foreground)] mb-3 text-center">
                     {group.name}
                   </h3>
@@ -248,16 +255,27 @@ export function StudyGroups() {
                           </div>
                         )}
                       </div>
-                      <span className="text-sm text-[var(--foreground)]">
-                        {group.members?.length || 0} {group.members?.length === 1 ? 'disciple' : 'disciples'}
+                      <span className="text-sm text-[var(--foreground)] block mb-3">
+                        {group.members?.length || 0} {group.members?.length === 1 ? 'member' : 'members'}
                       </span>
+                      <div className="flex flex-col gap-2">
+                        <Link href={`/dashboard/study/${group.id}`} className="w-full">
+                          <Button 
+                            variant="default" 
+                            className="w-full bg-[var(--deep-golden)] hover:bg-[var(--deep-golden)]/90 text-[var(--paper)]"
+                          >
+                            View Study
+                          </Button>
+                        </Link>
+                        <Button
+                          onClick={() => copyInviteLink(group.inviteCode)}
+                          variant="outline"
+                          className="w-full border-[var(--deep-golden)] text-[var(--deep-golden)] hover:bg-[var(--deep-golden)]/10"
+                        >
+                          Copy Invite Link
+                        </Button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => copyInviteLink(group.inviteCode)}
-                      className="btn-primary w-full text-sm"
-                    >
-                      Copy Invite Link
-                    </button>
                   </div>
                 </div>
               ))}
@@ -267,13 +285,13 @@ export function StudyGroups() {
 
         {/* Groups where user is a member */}
         {studyGroups?.memberOf && studyGroups.memberOf.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold text-[var(--foreground)] mb-4 text-center">
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold text-[var(--foreground)] text-center">
               Study Groups You're In
             </h2>
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex flex-col items-center gap-6">
               {studyGroups.memberOf.map((group) => (
-                <div key={group.id} className="bg-[var(--paper)] rounded-lg p-4 border-2 border-[var(--deep-golden)] w-[300px]">
+                <div key={group.id} className="bg-[var(--paper)] rounded-lg p-6 border-2 border-[var(--deep-golden)] w-[300px]">
                   <h3 className="text-xl font-semibold text-[var(--foreground)] mb-3 text-center">
                     {group.name}
                   </h3>
@@ -306,9 +324,17 @@ export function StudyGroups() {
                           </div>
                         )}
                       </div>
-                      <span className="text-sm text-[var(--foreground)]">
-                        {group.members?.length || 0} {group.members?.length === 1 ? 'disciple' : 'disciples'}
+                      <span className="text-sm text-[var(--foreground)] block mb-3">
+                        {group.members?.length || 0} {group.members?.length === 1 ? 'member' : 'members'}
                       </span>
+                      <Link href={`/dashboard/study/${group.id}`} className="w-full">
+                        <Button 
+                          variant="default" 
+                          className="w-full bg-[var(--deep-golden)] hover:bg-[var(--deep-golden)]/90 text-[var(--paper)]"
+                        >
+                          View Study
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -317,14 +343,14 @@ export function StudyGroups() {
           </div>
         )}
 
-        {/* No groups message */}
+        {/* No Groups Message */}
         {(!studyGroups?.adminOf?.length && !studyGroups?.memberOf?.length) && (
-          <div className="text-center text-[var(--foreground)] py-8">
-            <p className="text-lg">
-              You haven't created or joined any study groups yet.
+          <div className="text-center space-y-4">
+            <p className="text-[var(--foreground)] text-lg">
+              You haven't joined any study groups yet.
             </p>
-            <p className="mt-2">
-              Create a study group above or ask for an invite link to join one!
+            <p className="text-[var(--foreground)]">
+              Create a new study group or ask for an invite link to join one.
             </p>
           </div>
         )}

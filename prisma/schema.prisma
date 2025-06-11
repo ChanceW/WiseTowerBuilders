@@ -74,4 +74,27 @@ model StudyGroup {
   admin       User      @relation("GroupAdmin", fields: [adminId], references: [id])
   adminId     String
   members     User[]    @relation("GroupMembers")
+  studies     Study[]   // Relation to studies
+}
+
+model Study {
+  id            String     @id @default(cuid())
+  studyGroup    StudyGroup @relation(fields: [studyGroupId], references: [id])
+  studyGroupId  String
+  isCurrent     Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  questions     Question[] // Relation to questions
+
+  @@unique([studyGroupId, isCurrent], name: "one_current_study_per_group")
+}
+
+model Question {
+  id          String   @id @default(cuid())
+  context     String   @db.Text
+  discussion  String   @db.Text
+  study       Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  studyId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
