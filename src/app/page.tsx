@@ -27,9 +27,6 @@ export default function Home() {
           className="object-contain rounded-[25px] border-4 border-[var(--dark-tan)] mb-8"
         />
         <div className="max-w-4xl space-y-6">
-          <h1 className="text-4xl sm:text-5xl font-bold text-[var(--foreground)]">
-            Welcome to Disciples
-          </h1>
           <p className="text-xl sm:text-2xl text-[var(--accent)] font-medium">
             Bringing Scripture to Life with AI and Sound Hermeneutics
           </p>
