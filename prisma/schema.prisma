@@ -96,6 +96,7 @@ model Question {
   passage     String   @db.Text    // The specific Bible passage
   context     String   @db.Text    // Generated context from OpenAI
   discussion  String   @db.Text    // Generated discussion points from OpenAI
+  principle   String   // The hermeneutical principle used (historical-cultural, lexical-syntactical, theological, genre, application)
   study       Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
   studyId     String
   createdAt   DateTime @default(now())

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -73,6 +73,11 @@ export function CreateStudyDialog({ open, onOpenChange, studyGroupId, onStudyCre
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    setSelectedBook('');
+    setSelectedChapter('');
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -158,7 +163,7 @@ export function CreateStudyDialog({ open, onOpenChange, studyGroupId, onStudyCre
             </div>
           </div>
 
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-4">
             <Button
               type="button"
               variant="outline"
