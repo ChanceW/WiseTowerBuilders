@@ -29,35 +29,36 @@ Format the response as a JSON object with a "questions" array containing objects
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo", // Using gpt-3.5-turbo as it's more widely available
-      messages: [
-        {
-          role: "system",
-          content: "You are a biblical scholar and hermeneutics expert. Generate thoughtful discussion questions that help people understand Scripture better. Always return a valid JSON object with a 'questions' array."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      response_format: { type: "json_object" }
+      model: "gpt-4",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
     });
 
-    const response = JSON.parse(completion.choices[0].message.content);
-    
+    const content = completion.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('No content in OpenAI response');
+    }
+
+    const response = JSON.parse(content);
+
     // Validate the response structure
     if (!response || !Array.isArray(response.questions)) {
-      console.error('Invalid response structure:', response);
       throw new Error('Invalid response structure from OpenAI');
     }
 
-    // Ensure we have exactly 5 questions
-    if (response.questions.length !== 5) {
-      console.error('Expected 5 questions, got:', response.questions.length);
-      throw new Error('Expected 5 questions from OpenAI');
-    }
+    // Validate each question
+    const questions = response.questions.map((q: any) => {
+      if (!q.context || !q.question || !q.principle) {
+        throw new Error('Invalid question structure in OpenAI response');
+      }
+      return {
+        context: q.context,
+        question: q.question,
+        principle: q.principle,
+      } as GeneratedQuestion;
+    });
 
-    return response.questions;
+    return questions;
   } catch (error) {
     console.error('Error generating discussion questions:', error);
     throw new Error('Failed to generate discussion questions');
