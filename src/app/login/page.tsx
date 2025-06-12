@@ -28,6 +28,7 @@ function LoginForm() {
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
+    const callbackUrl = searchParams.get('callbackUrl');
 
     try {
       const result = await signIn("credentials", {
@@ -41,7 +42,8 @@ function LoginForm() {
         return;
       }
 
-      router.push("/dashboard");
+      // Redirect to the callback URL if it exists, otherwise to dashboard
+      router.push(callbackUrl || "/dashboard");
       router.refresh();
     } catch (error) {
       setError("Something went wrong");

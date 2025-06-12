@@ -7,6 +7,7 @@ import type { Study, Question, StudyGroup } from '@/generated/prisma';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateStudyDialog } from './create-study-dialog';
+import { QuestionAnswers } from '@/components/QuestionAnswers';
 
 interface StudyWithQuestions extends Study {
   questions: Question[];
@@ -59,7 +60,14 @@ export default function StudyPage() {
   return (
     <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-[var(--foreground)]">{studyGroup.name} - Study</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-[var(--foreground)]">{studyGroup.name} - Study</h1>
+          {currentStudy && (
+            <h2 className="text-xl text-[var(--foreground)] mt-2">
+              {currentStudy.bibleBook} Chapter {currentStudy.bibleChapter}
+            </h2>
+          )}
+        </div>
         {isAdmin && !currentStudy && (
           <Button 
             onClick={() => setShowCreateDialog(true)}
@@ -80,12 +88,19 @@ export default function StudyPage() {
               <CardContent>
                 <div className="space-y-4">
                   <div>
+                    <h3 className="font-semibold mb-2">Principle:</h3>
+                    <p className="text-gray-700 capitalize">{question.principle}</p>
+                  </div>
+                  <div>
                     <h3 className="font-semibold mb-2">Context:</h3>
                     <p className="text-gray-700">{question.context}</p>
                   </div>
                   <div>
                     <h3 className="font-semibold mb-2">Discussion:</h3>
                     <p className="text-gray-700">{question.discussion}</p>
+                  </div>
+                  <div className="pt-4 border-t border-[var(--muted)]">
+                    <QuestionAnswers questionId={question.id} />
                   </div>
                 </div>
               </CardContent>

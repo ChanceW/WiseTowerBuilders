@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import bibleBooks from '@/lib/bibleBooks.json';
+import { Shuffle } from "lucide-react"
 
 interface CreateStudyDialogProps {
   open: boolean;
@@ -14,31 +15,34 @@ interface CreateStudyDialogProps {
   onStudyCreated: () => void;
 }
 
-interface QuestionInput {
-  context: string;
-  discussion: string;
-}
-
 export function CreateStudyDialog({ open, onOpenChange, studyGroupId, onStudyCreated }: CreateStudyDialogProps) {
-  const [questions, setQuestions] = useState<QuestionInput[]>([{ context: '', discussion: '' }]);
+  const [selectedBook, setSelectedBook] = useState<string>('');
+  const [selectedChapter, setSelectedChapter] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const addQuestion = () => {
-    setQuestions([...questions, { context: '', discussion: '' }]);
+  const handleRandomBook = () => {
+    const randomIndex = Math.floor(Math.random() * bibleBooks.length);
+    const randomBook = bibleBooks[randomIndex];
+    setSelectedBook(randomBook.name);
+    setSelectedChapter(''); // Reset chapter when book changes
   };
 
-  const removeQuestion = (index: number) => {
-    setQuestions(questions.filter((_, i) => i !== index));
+  const handleRandomChapter = () => {
+    if (!selectedBook) return;
+    const book = bibleBooks.find(b => b.name === selectedBook);
+    if (!book) return;
+    const randomChapter = Math.floor(Math.random() * book.chapters) + 1;
+    setSelectedChapter(randomChapter.toString());
   };
 
-  const updateQuestion = (index: number, field: keyof QuestionInput, value: string) => {
-    const newQuestions = [...questions];
-    newQuestions[index] = { ...newQuestions[index], [field]: value };
-    setQuestions(newQuestions);
-  };
+  const chapterOptions = selectedBook
+    ? Array.from({ length: bibleBooks.find(b => b.name === selectedBook)?.chapters || 0 }, (_, i) => i + 1)
+    : [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedBook || !selectedChapter) return;
+
     setIsSubmitting(true);
 
     try {
@@ -49,7 +53,8 @@ export function CreateStudyDialog({ open, onOpenChange, studyGroupId, onStudyCre
         },
         body: JSON.stringify({
           studyGroupId,
-          questions,
+          bibleBook: selectedBook,
+          bibleChapter: parseInt(selectedChapter),
         }),
       });
 
@@ -58,7 +63,8 @@ export function CreateStudyDialog({ open, onOpenChange, studyGroupId, onStudyCre
       }
 
       onOpenChange(false);
-      setQuestions([{ context: '', discussion: '' }]);
+      setSelectedBook('');
+      setSelectedChapter('');
       onStudyCreated();
     } catch (error) {
       console.error('Error creating study:', error);
@@ -68,63 +74,107 @@ export function CreateStudyDialog({ open, onOpenChange, studyGroupId, onStudyCre
     }
   };
 
+  useEffect(() => {
+    setSelectedBook('');
+    setSelectedChapter('');
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[425px] bg-[var(--paper)]">
         <DialogHeader>
-          <DialogTitle>Create New Study</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-[var(--foreground)]">Create New Study</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {questions.map((question, index) => (
-            <div key={index} className="space-y-4 p-4 border rounded-lg">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Question {index + 1}</h3>
-                {questions.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removeQuestion(index)}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
-                    Remove
-                  </Button>
-                )}
+                <Label htmlFor="bible-book" className="text-[var(--foreground)]">Bible Book</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRandomBook}
+                  className="text-[var(--foreground)] hover:bg-[var(--deep-golden)] hover:text-[var(--paper)]"
+                >
+                  <Shuffle className="h-4 w-4 mr-1" />
+                  Random
+                </Button>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor={`context-${index}`}>Context</Label>
-                <Textarea
-                  id={`context-${index}`}
-                  value={question.context}
-                  onChange={(e) => updateQuestion(index, 'context', e.target.value)}
-                  placeholder="Enter the context for this question"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor={`discussion-${index}`}>Discussion Points</Label>
-                <Textarea
-                  id={`discussion-${index}`}
-                  value={question.discussion}
-                  onChange={(e) => updateQuestion(index, 'discussion', e.target.value)}
-                  placeholder="Enter discussion points for this question"
-                  required
-                />
-              </div>
+              <Select
+                value={selectedBook}
+                onValueChange={(value: string) => {
+                  setSelectedBook(value);
+                  setSelectedChapter('');
+                }}
+              >
+                <SelectTrigger id="bible-book" className="bg-[var(--background)] text-[var(--foreground)] border-[var(--muted)]">
+                  <SelectValue placeholder="Select a book" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60 overflow-y-auto bg-[var(--paper)]">
+                  {bibleBooks.map((book: { name: string; chapters: number }) => (
+                    <SelectItem 
+                      key={book.name} 
+                      value={book.name}
+                      className="text-[var(--foreground)] hover:bg-[var(--deep-golden)] hover:text-[var(--paper)]"
+                    >
+                      {book.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          ))}
-          <div className="flex gap-2 justify-end">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={addQuestion}
-              className="border-[var(--deep-golden)] text-[var(--deep-golden)] hover:bg-[var(--deep-golden)]/10"
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="bible-chapter" className="text-[var(--foreground)]">Chapter</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRandomChapter}
+                  disabled={!selectedBook}
+                  className="text-[var(--foreground)] hover:bg-[var(--deep-golden)] hover:text-[var(--paper)] disabled:opacity-50"
+                >
+                  <Shuffle className="h-4 w-4 mr-1" />
+                  Random
+                </Button>
+              </div>
+              <Select
+                value={selectedChapter}
+                onValueChange={setSelectedChapter}
+                disabled={!selectedBook}
+              >
+                <SelectTrigger id="bible-chapter" className="bg-[var(--background)] text-[var(--foreground)] border-[var(--muted)]">
+                  <SelectValue placeholder="Select a chapter" />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--paper)]">
+                  {chapterOptions.map((chapter) => (
+                    <SelectItem 
+                      key={chapter} 
+                      value={chapter.toString()}
+                      className="text-[var(--foreground)] hover:bg-[var(--deep-golden)] hover:text-[var(--paper)]"
+                    >
+                      Chapter {chapter}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="text-[var(--foreground)] hover:bg-[var(--muted)]"
             >
-              Add Question
+              Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
+            <Button
+              type="submit"
+              disabled={isSubmitting || !selectedBook || !selectedChapter}
               className="bg-[var(--deep-golden)] hover:bg-[var(--deep-golden)]/90 text-[var(--paper)]"
             >
               {isSubmitting ? 'Creating...' : 'Create Study'}
