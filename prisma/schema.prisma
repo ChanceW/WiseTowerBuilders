@@ -84,6 +84,8 @@ model Study {
   isCurrent     Boolean    @default(false)
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
+  bibleBook     String     // The book of the Bible
+  bibleChapter  Int        // The chapter number
   questions     Question[] // Relation to questions
 
   @@unique([studyGroupId, isCurrent], name: "one_current_study_per_group")
@@ -91,8 +93,9 @@ model Study {
 
 model Question {
   id          String   @id @default(cuid())
-  context     String   @db.Text
-  discussion  String   @db.Text
+  passage     String   @db.Text    // The specific Bible passage
+  context     String   @db.Text    // Generated context from OpenAI
+  discussion  String   @db.Text    // Generated discussion points from OpenAI
   study       Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
   studyId     String
   createdAt   DateTime @default(now())

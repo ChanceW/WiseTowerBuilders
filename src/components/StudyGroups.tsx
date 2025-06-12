@@ -264,7 +264,7 @@ export function StudyGroups() {
                             variant="default" 
                             className="w-full bg-[var(--deep-golden)] hover:bg-[var(--deep-golden)]/90 text-[var(--paper)]"
                           >
-                            View Study
+                            Study Room
                           </Button>
                         </Link>
                         <Button
@@ -332,7 +332,7 @@ export function StudyGroups() {
                           variant="default" 
                           className="w-full bg-[var(--deep-golden)] hover:bg-[var(--deep-golden)]/90 text-[var(--paper)]"
                         >
-                          View Study
+                          Study Room
                         </Button>
                       </Link>
                     </div>
