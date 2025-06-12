@@ -7,6 +7,7 @@ import type { Study, Question, StudyGroup } from '@/generated/prisma';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateStudyDialog } from './create-study-dialog';
+import { QuestionAnswers } from '@/components/QuestionAnswers';
 
 interface StudyWithQuestions extends Study {
   questions: Question[];
@@ -97,6 +98,9 @@ export default function StudyPage() {
                   <div>
                     <h3 className="font-semibold mb-2">Discussion:</h3>
                     <p className="text-gray-700">{question.discussion}</p>
+                  </div>
+                  <div className="pt-4 border-t border-[var(--muted)]">
+                    <QuestionAnswers questionId={question.id} />
                   </div>
                 </div>
               </CardContent>

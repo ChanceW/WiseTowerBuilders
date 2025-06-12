@@ -64,11 +64,38 @@ Format the response as a JSON object with a "questions" array containing objects
   }
 }
 
+// Add type for generated questions
+interface GeneratedQuestion {
+  context: string;
+  question: string;
+  principle: string;
+}
+
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const userEmail = session?.user?.email;
+    
+    if (!userEmail) {
+      console.log('POST /api/studies - Unauthorized: No session or email');
       return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    // Get the user from database to ensure we have the correct ID
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail },
+      select: { id: true }
+    });
+
+    console.log('POST /api/studies - User details:', {
+      sessionUserId: session?.user?.id,
+      databaseUserId: user?.id,
+      email: userEmail
+    });
+
+    if (!user) {
+      console.log('POST /api/studies - User not found in database:', userEmail);
+      return new NextResponse('User not found', { status: 404 });
     }
 
     const { studyGroupId, bibleBook, bibleChapter } = await request.json();
@@ -88,10 +115,15 @@ export async function POST(request: Request) {
     });
 
     if (!studyGroup) {
+      console.log('POST /api/studies - Study group not found:', studyGroupId);
       return new NextResponse('Study group not found', { status: 404 });
     }
 
-    if (studyGroup.adminId !== session.user.id) {
+    if (studyGroup.adminId !== user.id) {
+      console.log('POST /api/studies - Forbidden: User is not admin', {
+        userId: user.id,
+        adminId: studyGroup.adminId
+      });
       return new NextResponse('Only the admin can create studies', { status: 403 });
     }
 
@@ -99,44 +131,43 @@ export async function POST(request: Request) {
     // Generate discussion questions using OpenAI
     const questions = await generateDiscussionQuestions(passage);
 
-    // Create the study with generated questions
-    const study = await prisma.$transaction(async (tx) => {
-      // Mark any existing current study as not current
-      await tx.study.updateMany({
-        where: {
-          studyGroupId,
-          isCurrent: true,
+    // Create the study with questions
+    const study = await prisma.study.create({
+      data: {
+        bibleBook: validatedBibleBook,
+        bibleChapter: validatedBibleChapter,
+        studyGroupId,
+        isCurrent: true,
+        questions: {
+          create: questions.map((q: GeneratedQuestion) => ({
+            context: q.context,
+            discussion: q.question,
+            principle: q.principle,
+          })),
         },
-        data: {
-          isCurrent: false,
-        },
-      });
+      },
+      include: {
+        questions: true,
+      },
+    });
 
-      // Create the new study with generated questions
-      return await tx.study.create({
-        data: {
-          studyGroupId,
-          bibleBook: validatedBibleBook,
-          bibleChapter: validatedBibleChapter,
-          isCurrent: true,
-          questions: {
-            create: questions.map((q: any) => ({
-              passage,
-              context: q.context,
-              discussion: q.question,
-              principle: q.principle,
-            })),
-          },
-        },
-        include: {
-          questions: true,
-        },
-      });
+    console.log('POST /api/studies - Study created:', {
+      studyId: study.id,
+      questionCount: study.questions.length
     });
 
     return NextResponse.json(study);
   } catch (error) {
-    console.error('Error creating study:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('POST /api/studies - Error:', error);
+    return new NextResponse(
+      JSON.stringify({ 
+        error: 'Internal Server Error',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }), 
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   }
 } 

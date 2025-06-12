@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -15,18 +9,18 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  password      String?
-  emailVerified DateTime?
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  // Study group relationships
-  adminOfGroups StudyGroup[] @relation("GroupAdmin")
+  id             String       @id @default(cuid())
+  name           String?
+  email          String       @unique
+  password       String?
+  emailVerified  DateTime?
+  image          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  accounts       Account[]
+  answers        Answer[]
+  sessions       Session[]
+  adminOfGroups  StudyGroup[] @relation("GroupAdmin")
   memberOfGroups StudyGroup[] @relation("GroupMembers")
 }
 
@@ -36,15 +30,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -66,39 +59,53 @@ model VerificationToken {
 }
 
 model StudyGroup {
-  id          String    @id @default(cuid())
-  name        String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  inviteCode  String    @unique // For sharing the group
-  admin       User      @relation("GroupAdmin", fields: [adminId], references: [id])
-  adminId     String
-  members     User[]    @relation("GroupMembers")
-  studies     Study[]   // Relation to studies
+  id         String   @id @default(cuid())
+  name       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  inviteCode String   @unique
+  adminId    String
+  studies    Study[]
+  admin      User     @relation("GroupAdmin", fields: [adminId], references: [id])
+  members    User[]   @relation("GroupMembers")
 }
 
 model Study {
-  id            String     @id @default(cuid())
-  studyGroup    StudyGroup @relation(fields: [studyGroupId], references: [id])
-  studyGroupId  String
-  isCurrent     Boolean    @default(false)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  bibleBook     String     // The book of the Bible
-  bibleChapter  Int        // The chapter number
-  questions     Question[] // Relation to questions
+  id           String     @id @default(cuid())
+  studyGroupId String
+  isCurrent    Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  bibleBook    String
+  bibleChapter Int
+  questions    Question[]
+  studyGroup   StudyGroup @relation(fields: [studyGroupId], references: [id])
 
   @@unique([studyGroupId, isCurrent], name: "one_current_study_per_group")
 }
 
 model Question {
-  id          String   @id @default(cuid())
-  passage     String   @db.Text    // The specific Bible passage
-  context     String   @db.Text    // Generated context from OpenAI
-  discussion  String   @db.Text    // Generated discussion points from OpenAI
-  principle   String   // The hermeneutical principle used (historical-cultural, lexical-syntactical, theological, genre, application)
-  study       Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
-  studyId     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  context    String
+  discussion String
+  studyId    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  passage    String
+  principle  String
+  answers    Answer[]
+  study      Study    @relation(fields: [studyId], references: [id], onDelete: Cascade)
+}
+
+model Answer {
+  id         String   @id @default(cuid())
+  content    String
+  questionId String
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, userId])
 }

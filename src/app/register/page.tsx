@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,7 +40,23 @@ export default function RegisterPage() {
         throw new Error(data);
       }
 
-      router.push("/login");
+      // Get the callback URL from the search params
+      const callbackUrl = searchParams.get('callbackUrl');
+      
+      // Sign in the user immediately after registration
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        throw new Error("Failed to sign in after registration");
+      }
+
+      // Redirect to the callback URL if it exists, otherwise to dashboard
+      router.push(callbackUrl || "/dashboard");
+      router.refresh();
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -47,6 +64,18 @@ export default function RegisterPage() {
         setError("Something went wrong");
       }
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const callbackUrl = searchParams.get('callbackUrl');
+      await signIn('google', { callbackUrl: callbackUrl || '/dashboard' });
+    } catch (err) {
+      setError('Failed to sign in with Google');
       setIsLoading(false);
     }
   };
@@ -77,7 +106,7 @@ export default function RegisterPage() {
 
           <button
             type="button"
-            onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+            onClick={handleGoogleSignIn}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 bg-white text-gray-700 px-6 py-3 rounded-md border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
