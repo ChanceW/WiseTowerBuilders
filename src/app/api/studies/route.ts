@@ -8,9 +8,10 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-async function generateDiscussionQuestions(passage: string) {
+async function generateDiscussionQuestions(bibleBook: string, bibleChapter: number) {
+  const passage = `${bibleBook} ${bibleChapter}`;
   const prompt = `Generate 5 discussion questions for the following Bible passage, based on hermeneutical principles. For each question, provide:
-1. Context: Brief contextual guide for the question
+1. Context: Brief content which helps the reader answer the question
 2. Question: A thoughtful discussion question
 3. Principle: The specific hermeneutical principle used (historical-cultural, lexical-syntactical, theological, genre, or application)
 
@@ -29,7 +30,7 @@ Format the response as a JSON object with a "questions" array containing objects
 
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
     });
@@ -128,9 +129,8 @@ export async function POST(request: Request) {
       return new NextResponse('Only the admin can create studies', { status: 403 });
     }
 
-    const passage = `${validatedBibleBook} ${validatedBibleChapter}`;
     // Generate discussion questions using OpenAI
-    const questions = await generateDiscussionQuestions(passage);
+    const questions = await generateDiscussionQuestions(validatedBibleBook, validatedBibleChapter);
 
     // Create the study with questions
     const study = await prisma.study.create({
@@ -144,6 +144,7 @@ export async function POST(request: Request) {
             context: q.context,
             discussion: q.question,
             principle: q.principle,
+            passage: `${validatedBibleBook} ${validatedBibleChapter}`,  // Keep passage for backward compatibility
           })),
         },
       },

@@ -26,6 +26,7 @@ export default function StudyPage() {
   const [studyGroup, setStudyGroup] = useState<StudyGroupWithStudy | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const fetchStudyGroup = async () => {
@@ -34,6 +35,11 @@ export default function StudyPage() {
         if (!response.ok) throw new Error('Failed to fetch study group');
         const data = await response.json();
         setStudyGroup(data);
+        // Check if the current user is the admin using the database user ID
+        const userResponse = await fetch('/api/user');
+        if (!userResponse.ok) throw new Error('Failed to fetch user');
+        const userData = await userResponse.json();
+        setIsAdmin(userData.id === data.admin.id);
       } catch (error) {
         console.error('Error fetching study group:', error);
       } finally {
@@ -54,7 +60,6 @@ export default function StudyPage() {
     return <div className="flex justify-center items-center min-h-screen">Study group not found</div>;
   }
 
-  const isAdmin = session?.user?.id === studyGroup.admin.id;
   const currentStudy = studyGroup.studies.find(study => study.isCurrent);
 
   return (
