@@ -74,6 +74,7 @@ model Study {
   id           String     @id @default(cuid())
   studyGroupId String
   isCurrent    Boolean    @default(false)
+  status       String     @default("active")
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   bibleBook    String

@@ -48,10 +48,12 @@ export async function GET(
           select: { id: true, email: true }
         },
         studies: {
-          where: { isCurrent: true },
           include: {
             questions: true,
           },
+          orderBy: {
+            createdAt: 'desc'
+          }
         },
       },
     });
