@@ -6,6 +6,24 @@ import { useRouter } from "next/navigation";
 import { UserAvatar } from "./UserAvatar";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Pencil } from "lucide-react";
 
 interface StudyGroup {
   id: string;
@@ -39,6 +57,11 @@ export function StudyGroups() {
   const [newGroupName, setNewGroupName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [showInviteCode, setShowInviteCode] = useState<string | null>(null);
+  const [showLeaveDialog, setShowLeaveDialog] = useState<string | null>(null);
+  const [selectedNewAdmin, setSelectedNewAdmin] = useState<string>("");
+  const [isLeaving, setIsLeaving] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -139,6 +162,90 @@ export function StudyGroups() {
     navigator.clipboard.writeText(link);
   };
 
+  const handleLeaveGroup = async (groupId: string, isAdmin: boolean) => {
+    const group = studyGroups?.adminOf?.find(g => g.id === groupId);
+    const hasOtherMembers = group?.members?.some(member => member.id !== group.admin?.id) ?? false;
+    
+    if (isAdmin && !selectedNewAdmin && hasOtherMembers) {
+      setShowLeaveDialog(groupId);
+      return;
+    }
+
+    setIsLeaving(true);
+    try {
+      const response = await fetch(`/api/study-groups/${groupId}/leave`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(isAdmin ? { newAdminId: selectedNewAdmin } : {}),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      // Update local state
+      setStudyGroups(prev => {
+        if (!prev) return null;
+        return {
+          adminOf: prev.adminOf.filter(g => g.id !== groupId),
+          memberOf: prev.memberOf.filter(g => g.id !== groupId),
+        };
+      });
+
+      toast.success('Successfully left the study group');
+      setShowLeaveDialog(null);
+      setSelectedNewAdmin("");
+    } catch (error) {
+      console.error('Error leaving group:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to leave group');
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
+  const handleEditGroupName = async (groupId: string) => {
+    if (!newGroupName.trim()) return;
+
+    setIsEditing(true);
+    try {
+      const response = await fetch(`/api/study-groups/${groupId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: newGroupName.trim() }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      const updatedGroup = await response.json();
+      
+      // Update local state
+      setStudyGroups(prev => {
+        if (!prev) return null;
+        return {
+          adminOf: prev.adminOf.map(g => g.id === groupId ? updatedGroup : g),
+          memberOf: prev.memberOf.map(g => g.id === groupId ? updatedGroup : g),
+        };
+      });
+
+      toast.success('Group name updated successfully');
+      setShowEditDialog(null);
+      setNewGroupName("");
+    } catch (error) {
+      console.error('Error updating group name:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update group name');
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="text-[var(--foreground)]">Loading study groups...</div>;
   }
@@ -218,12 +325,8 @@ export function StudyGroups() {
           Your Study Groups
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Combined groups display with deduplication */}
           {(() => {
-            // Create a Set of admin group IDs for quick lookup
             const adminGroupIds = new Set(studyGroups?.adminOf?.map(group => group.id) || []);
-            
-            // Combine groups, prioritizing admin groups and filtering out duplicates
             const allGroups = [
               ...(studyGroups?.adminOf || []),
               ...(studyGroups?.memberOf?.filter(group => !adminGroupIds.has(group.id)) || [])
@@ -231,17 +334,36 @@ export function StudyGroups() {
 
             return allGroups.map((group) => {
               const isAdmin = adminGroupIds.has(group.id);
+              const otherMembers = group.members.filter(member => member.id !== group.admin.id);
+              
               return (
                 <div key={group.id} className="bg-[var(--paper)] rounded-lg p-6 border-2 border-[var(--deep-golden)]">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xl font-semibold text-[var(--foreground)]">
-                      {group.name}
-                    </h3>
-                    {isAdmin && (
-                      <span className="bg-[var(--deep-golden)] text-[var(--paper)] px-2 py-1 rounded-full text-xs font-medium">
-                        Admin
-                      </span>
-                    )}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-semibold text-[var(--foreground)]">
+                          {group.name}
+                        </h3>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setNewGroupName(group.name);
+                              setShowEditDialog(group.id);
+                            }}
+                            className="h-8 w-8 text-[var(--foreground)]/70 hover:text-[var(--foreground)] hover:bg-[var(--deep-golden)]/10"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      {isAdmin && (
+                        <span className="bg-[var(--deep-golden)] text-[var(--paper)] px-2 py-1 rounded-full text-xs font-medium">
+                          Admin
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
@@ -292,8 +414,124 @@ export function StudyGroups() {
                           Copy Invite Link
                         </Button>
                       )}
+                      <Button
+                        onClick={() => handleLeaveGroup(group.id, isAdmin)}
+                        variant="outline"
+                        className="w-full border-red-500 text-red-500 hover:bg-red-500/10"
+                        disabled={isLeaving}
+                      >
+                        {isLeaving ? 'Leaving...' : 'Leave Group'}
+                      </Button>
                     </div>
                   </div>
+
+                  {/* Edit Group Name Dialog */}
+                  <Dialog open={showEditDialog === group.id} onOpenChange={(open) => !open && setShowEditDialog(null)}>
+                    <DialogContent className="bg-[var(--paper)] border-[var(--deep-golden)]">
+                      <DialogHeader>
+                        <DialogTitle className="text-[var(--foreground)]">Edit Group Name</DialogTitle>
+                        <DialogDescription className="text-[var(--foreground)]/70">
+                          Enter a new name for your study group
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <Input
+                          value={newGroupName}
+                          onChange={(e) => setNewGroupName(e.target.value)}
+                          placeholder="Enter new group name"
+                          className="bg-[var(--background)] border-[var(--deep-golden)] text-[var(--foreground)] placeholder:text-[var(--foreground)]/50"
+                          disabled={isEditing}
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowEditDialog(null)}
+                            className="border-[var(--deep-golden)] text-[var(--deep-golden)]"
+                            disabled={isEditing}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={() => handleEditGroupName(group.id)}
+                            disabled={!newGroupName.trim() || isEditing}
+                            className="bg-[var(--deep-golden)] hover:bg-[var(--deep-golden)]/90 text-[var(--paper)]"
+                          >
+                            {isEditing ? 'Saving...' : 'Save Changes'}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  {/* Leave Group Dialog */}
+                  <Dialog open={showLeaveDialog === group.id} onOpenChange={(open) => !open && setShowLeaveDialog(null)}>
+                    <DialogContent className="bg-[var(--paper)] border-[var(--deep-golden)]">
+                      <DialogHeader>
+                        <DialogTitle className="text-[var(--foreground)]">Leave Study Group</DialogTitle>
+                        <DialogDescription className="text-[var(--foreground)]/70">
+                          {otherMembers.length > 0 
+                            ? "You are the admin of this group. Please select a new admin before leaving."
+                            : "Are you sure you want to leave this study group?"}
+                        </DialogDescription>
+                      </DialogHeader>
+                      {otherMembers.length > 0 ? (
+                        <div className="space-y-4">
+                          <Select
+                            value={selectedNewAdmin}
+                            onValueChange={setSelectedNewAdmin}
+                          >
+                            <SelectTrigger className="bg-[var(--background)] border-[var(--deep-golden)] text-[var(--foreground)]">
+                              <SelectValue placeholder="Select new admin" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[var(--paper)] border-[var(--deep-golden)]">
+                              {otherMembers.map((member) => (
+                                <SelectItem 
+                                  key={member.id} 
+                                  value={member.id}
+                                  className="text-[var(--foreground)] hover:bg-[var(--deep-golden)]/10"
+                                >
+                                  {member.name || member.email}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowLeaveDialog(null)}
+                              className="border-[var(--deep-golden)] text-[var(--deep-golden)]"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => handleLeaveGroup(group.id, true)}
+                              disabled={!selectedNewAdmin || isLeaving}
+                              className="bg-red-500 hover:bg-red-500/90 text-white"
+                            >
+                              {isLeaving ? 'Leaving...' : 'Leave Group'}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowLeaveDialog(null)}
+                            className="border-[var(--deep-golden)] text-[var(--deep-golden)]"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={() => handleLeaveGroup(group.id, true)}
+                            disabled={isLeaving}
+                            className="bg-red-500 hover:bg-red-500/90 text-white"
+                          >
+                            {isLeaving ? 'Leaving...' : 'Delete Group'}
+                          </Button>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </div>
               );
             });
