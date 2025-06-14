@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -10,10 +10,23 @@ import { toast } from 'sonner';
 import { UserAvatar } from '@/components/UserAvatar';
 
 export default function ProfilePage() {
-  const { data: session, update } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [name, setName] = useState(session?.user?.name || '');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/');
+    }
+  }, [status, router]);
+
+  // Update name state when session changes
+  useEffect(() => {
+    if (session?.user?.name) {
+      setName(session.user.name);
+    }
+  }, [session]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,15 +46,37 @@ export default function ProfilePage() {
       }
 
       await update({ name });
-      toast.success('Profile updated successfully');
+      toast.success('Profile updated successfully', {
+        description: `Your display name has been updated to "${name}"`,
+        duration: 4000,
+        className: 'bg-[var(--paper)] text-[var(--foreground)] border-[var(--deep-golden)]',
+      });
       router.refresh();
     } catch (error) {
-      toast.error('Failed to update profile');
+      toast.error('Failed to update profile', {
+        description: 'Please try again later',
+        duration: 4000,
+        className: 'bg-[var(--paper)] text-[var(--foreground)] border-red-500',
+      });
       console.error('Error updating profile:', error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Show loading state while checking authentication
+  if (status === 'loading') {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
+        <div className="text-[var(--foreground)]">Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render the form if not authenticated (will redirect in useEffect)
+  if (status === 'unauthenticated') {
+    return null;
+  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
