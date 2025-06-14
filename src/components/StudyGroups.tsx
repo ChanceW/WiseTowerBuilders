@@ -213,88 +213,36 @@ export function StudyGroups() {
       )}
 
       {/* Study Groups List */}
-      <div className="space-y-12">
-        {/* Groups where user is admin */}
-        {studyGroups?.adminOf && studyGroups.adminOf.length > 0 && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-[var(--foreground)] text-center">
-              Your Study Groups
-            </h2>
-            <div className="flex flex-col items-center gap-6">
-              {studyGroups.adminOf.map((group) => (
-                <div key={group.id} className="bg-[var(--paper)] rounded-lg p-6 border-2 border-[var(--deep-golden)] w-[300px]">
-                  <h3 className="text-xl font-semibold text-[var(--foreground)] mb-3 text-center">
-                    {group.name}
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <UserAvatar user={group.admin} size={24} />
-                      <span className="text-sm text-[var(--foreground)]">
-                        Admin: {group.admin?.name || group.admin?.email || 'Unknown'}
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {group.members
-                          ?.filter(member => member.id !== group.admin?.id)
-                          .slice(0, 3)
-                          .map((member) => (
-                            <div key={member.id} className="flex items-center gap-1 bg-[var(--background)] px-2 py-1 rounded-full border border-[var(--muted)]">
-                              <UserAvatar user={member} size={20} />
-                              <span className="text-xs text-[var(--foreground)]">
-                                {member.name || member.email.split('@')[0]}
-                              </span>
-                            </div>
-                          ))}
-                        {group.members?.filter(member => member.id !== group.admin?.id).length > 3 && (
-                          <div className="flex items-center gap-1 bg-[var(--background)] px-2 py-1 rounded-full border border-[var(--muted)]">
-                            <div className="w-5 h-5 rounded-full bg-[var(--muted)] flex items-center justify-center text-xs text-[var(--foreground)]">
-                              +{group.members.filter(member => member.id !== group.admin?.id).length - 3}
-                            </div>
-                            <span className="text-xs text-[var(--foreground)]">more</span>
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-sm text-[var(--foreground)] block mb-3">
-                        {group.members?.length || 0} {group.members?.length === 1 ? 'member' : 'members'}
-                      </span>
-                      <div className="flex flex-col gap-2">
-                        <Link href={`/dashboard/study/${group.id}`} className="w-full">
-                          <Button 
-                            variant="default" 
-                            className="w-full bg-[var(--deep-golden)] hover:bg-[var(--deep-golden)]/90 text-[var(--paper)]"
-                          >
-                            Study Room
-                          </Button>
-                        </Link>
-                        <Button
-                          onClick={() => copyInviteLink(group.inviteCode)}
-                          variant="outline"
-                          className="w-full border-[var(--deep-golden)] text-[var(--deep-golden)] hover:bg-[var(--deep-golden)]/10"
-                        >
-                          Copy Invite Link
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-[var(--foreground)] text-center">
+          Your Study Groups
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Combined groups display with deduplication */}
+          {(() => {
+            // Create a Set of admin group IDs for quick lookup
+            const adminGroupIds = new Set(studyGroups?.adminOf?.map(group => group.id) || []);
+            
+            // Combine groups, prioritizing admin groups and filtering out duplicates
+            const allGroups = [
+              ...(studyGroups?.adminOf || []),
+              ...(studyGroups?.memberOf?.filter(group => !adminGroupIds.has(group.id)) || [])
+            ];
 
-        {/* Groups where user is a member */}
-        {studyGroups?.memberOf && studyGroups.memberOf.length > 0 && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-[var(--foreground)] text-center">
-              Study Groups You're In
-            </h2>
-            <div className="flex flex-col items-center gap-6">
-              {studyGroups.memberOf.map((group) => (
-                <div key={group.id} className="bg-[var(--paper)] rounded-lg p-6 border-2 border-[var(--deep-golden)] w-[300px]">
-                  <h3 className="text-xl font-semibold text-[var(--foreground)] mb-3 text-center">
-                    {group.name}
-                  </h3>
+            return allGroups.map((group) => {
+              const isAdmin = adminGroupIds.has(group.id);
+              return (
+                <div key={group.id} className="bg-[var(--paper)] rounded-lg p-6 border-2 border-[var(--deep-golden)]">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xl font-semibold text-[var(--foreground)]">
+                      {group.name}
+                    </h3>
+                    {isAdmin && (
+                      <span className="bg-[var(--deep-golden)] text-[var(--paper)] px-2 py-1 rounded-full text-xs font-medium">
+                        Admin
+                      </span>
+                    )}
+                  </div>
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <UserAvatar user={group.admin} size={24} />
@@ -302,31 +250,31 @@ export function StudyGroups() {
                         Admin: {group.admin?.name || group.admin?.email || 'Unknown'}
                       </span>
                     </div>
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {group.members
-                          ?.filter(member => member.id !== group.admin?.id)
-                          .slice(0, 3)
-                          .map((member) => (
-                            <div key={member.id} className="flex items-center gap-1 bg-[var(--background)] px-2 py-1 rounded-full border border-[var(--muted)]">
-                              <UserAvatar user={member} size={20} />
-                              <span className="text-xs text-[var(--foreground)]">
-                                {member.name || member.email.split('@')[0]}
-                              </span>
-                            </div>
-                          ))}
-                        {group.members?.filter(member => member.id !== group.admin?.id).length > 3 && (
-                          <div className="flex items-center gap-1 bg-[var(--background)] px-2 py-1 rounded-full border border-[var(--muted)]">
-                            <div className="w-5 h-5 rounded-full bg-[var(--muted)] flex items-center justify-center text-xs text-[var(--foreground)]">
-                              +{group.members.filter(member => member.id !== group.admin?.id).length - 3}
-                            </div>
-                            <span className="text-xs text-[var(--foreground)]">more</span>
+                    <div className="flex flex-wrap gap-2">
+                      {group.members
+                        ?.filter(member => member.id !== group.admin?.id)
+                        .slice(0, 3)
+                        .map((member) => (
+                          <div key={member.id} className="flex items-center gap-1 bg-[var(--background)] px-2 py-1 rounded-full border border-[var(--muted)]">
+                            <UserAvatar user={member} size={20} />
+                            <span className="text-xs text-[var(--foreground)]">
+                              {member.name || member.email.split('@')[0]}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                      <span className="text-sm text-[var(--foreground)] block mb-3">
-                        {group.members?.length || 0} {group.members?.length === 1 ? 'member' : 'members'}
-                      </span>
+                        ))}
+                      {group.members?.filter(member => member.id !== group.admin?.id).length > 3 && (
+                        <div className="flex items-center gap-1 bg-[var(--background)] px-2 py-1 rounded-full border border-[var(--muted)]">
+                          <div className="w-5 h-5 rounded-full bg-[var(--muted)] flex items-center justify-center text-xs text-[var(--foreground)]">
+                            +{group.members.filter(member => member.id !== group.admin?.id).length - 3}
+                          </div>
+                          <span className="text-xs text-[var(--foreground)]">more</span>
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-sm text-[var(--foreground)] block mb-3">
+                      {group.members?.length || 0} {group.members?.length === 1 ? 'member' : 'members'}
+                    </span>
+                    <div className="space-y-2">
                       <Link href={`/dashboard/study/${group.id}`} className="w-full">
                         <Button 
                           variant="default" 
@@ -335,13 +283,22 @@ export function StudyGroups() {
                           Study Room
                         </Button>
                       </Link>
+                      {isAdmin && (
+                        <Button
+                          onClick={() => copyInviteLink(group.inviteCode)}
+                          variant="outline"
+                          className="w-full border-[var(--deep-golden)] text-[var(--deep-golden)] hover:bg-[var(--deep-golden)]/10"
+                        >
+                          Copy Invite Link
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              );
+            });
+          })()}
+        </div>
 
         {/* No Groups Message */}
         {(!studyGroups?.adminOf?.length && !studyGroups?.memberOf?.length) && (
