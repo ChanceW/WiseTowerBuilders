@@ -51,6 +51,14 @@ export function Navigation() {
                       >
                         Dashboard
                       </Link>
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--muted)]"
+                        role="menuitem"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Profile Settings
+                      </Link>
                       <button
                         onClick={() => {
                           signOut();
